@@ -38,12 +38,23 @@ app.get("/search", async (c) => {
     year: year ? Number(year) : undefined
   };
   const scrapers = await getScrapers(c.env);
-  const results = await Promise.all(
-    Object.values(scrapers)
-      .filter((s) => (filters.language ? s.language === filters.language : true))
-      .map(async (scraper) => ({ source: scraper.key, items: await scraper.search(q, filters) }))
+  const selected = Object.values(scrapers).filter((s) => (filters.language ? s.language === filters.language : true));
+  const settled = await Promise.allSettled(
+    selected.map(async (scraper) => ({ source: scraper.key, items: await scraper.search(q, filters) }))
   );
-  return c.json(results);
+
+  const results = settled
+    .filter((entry): entry is PromiseFulfilledResult<{ source: string; items: unknown[] }> => entry.status === "fulfilled")
+    .map((entry) => entry.value);
+
+  const errors = settled
+    .map((entry, index) => {
+      if (entry.status === "fulfilled") return null;
+      return { source: selected[index].key, message: entry.reason instanceof Error ? entry.reason.message : "search failed" };
+    })
+    .filter(Boolean);
+
+  return c.json({ results, errors });
 });
 
 app.get("/manga/:source/:id", async (c) => {
@@ -52,8 +63,12 @@ app.get("/manga/:source/:id", async (c) => {
   const id = decodeURIComponent(c.req.param("id"));
   const scraper = scrapers[source];
   if (!scraper) return c.json({ error: "Unknown source" }, 404);
-  const manga = await scraper.getManga(id);
-  return c.json(manga);
+  try {
+    const manga = await scraper.getManga(id);
+    return c.json(manga);
+  } catch (error) {
+    return c.json({ error: error instanceof Error ? error.message : "manga lookup failed" }, 502);
+  }
 });
 
 app.get("/manga/:source/:id/chapters", async (c) => {
@@ -62,8 +77,12 @@ app.get("/manga/:source/:id/chapters", async (c) => {
   const id = decodeURIComponent(c.req.param("id"));
   const scraper = scrapers[source];
   if (!scraper) return c.json({ error: "Unknown source" }, 404);
-  const chapters = await scraper.getChapters(id);
-  return c.json(chapters);
+  try {
+    const chapters = await scraper.getChapters(id);
+    return c.json(chapters);
+  } catch (error) {
+    return c.json({ error: error instanceof Error ? error.message : "chapter lookup failed" }, 502);
+  }
 });
 
 app.get("/chapter/:source/:id/pages", async (c) => {
@@ -72,8 +91,12 @@ app.get("/chapter/:source/:id/pages", async (c) => {
   const id = decodeURIComponent(c.req.param("id"));
   const scraper = scrapers[source];
   if (!scraper) return c.json({ error: "Unknown source" }, 404);
-  const pages = await scraper.getPages(id);
-  return c.json(pages);
+  try {
+    const pages = await scraper.getPages(id);
+    return c.json(pages);
+  } catch (error) {
+    return c.json({ error: error instanceof Error ? error.message : "page lookup failed" }, 502);
+  }
 });
 
 app.get("/image", async (c) => {

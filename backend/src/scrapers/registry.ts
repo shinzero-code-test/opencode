@@ -48,14 +48,14 @@ export async function getScrapers(env: Env): Promise<Record<string, Scraper>> {
     olympusatff: new CheerioAdapter(env, {
       key: "olympusatff",
       name: "Olympus ATFF",
-      baseUrl: "https://olympusatff.com",
+      baseUrl: "https://olympustaff.com",
       language: "ar",
       selectors: sourceConfigs.olympusatff.selectors
     }),
     azuramoon: new CheerioAdapter(env, {
       key: "azuramoon",
       name: "AzuraMoon",
-      baseUrl: "https://azuramoon.com",
+      baseUrl: "https://azoramoon.com",
       language: "ar",
       selectors: sourceConfigs.azuramoon.selectors
     }),
@@ -135,16 +135,22 @@ export async function getScrapers(env: Env): Promise<Record<string, Scraper>> {
     })
   };
 
-  const rows = await env.DB.prepare("SELECT id, name, base_url, language, adapter_key, config_json, enabled FROM sources WHERE enabled = 1").all();
-  const dynamic = rows.results as SourceRow[];
-  for (const row of dynamic) {
-    if (!row.adapter_key || row.adapter_key === "mangadex" || row.adapter_key === "webtoons") continue;
-    try {
-      const adapterKey = row.adapter_key === "cheerio" ? row.id : row.adapter_key;
-      scrapers[row.id] = createCheerioFromKey(env, adapterKey, row.name, row.base_url, row.language, row.config_json);
-    } catch {
-      continue;
+  try {
+    const rows = await env.DB.prepare(
+      "SELECT id, name, base_url, language, adapter_key, config_json, enabled FROM sources WHERE enabled = 1"
+    ).all();
+    const dynamic = rows.results as SourceRow[];
+    for (const row of dynamic) {
+      if (!row.adapter_key || row.adapter_key === "mangadex" || row.adapter_key === "webtoons") continue;
+      try {
+        const adapterKey = row.adapter_key === "cheerio" ? row.id : row.adapter_key;
+        scrapers[row.id] = createCheerioFromKey(env, adapterKey, row.name, row.base_url, row.language, row.config_json);
+      } catch {
+        continue;
+      }
     }
+  } catch (error) {
+    console.warn("Failed to load dynamic sources", error);
   }
 
   return scrapers;
