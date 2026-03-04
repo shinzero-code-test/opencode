@@ -14,7 +14,12 @@ export default async function MangaPage({
   const searchUrl = new URL(`${process.env.NEXT_PUBLIC_MANGAVAULT_API_URL}/search`);
   searchUrl.searchParams.set("q", manga.title);
   const searchRes = await fetch(searchUrl.toString());
-  const sources = searchRes.ok ? await searchRes.json() : [];
+  const searchJson = searchRes.ok ? await searchRes.json() : [];
+  const sources = Array.isArray(searchJson)
+    ? searchJson
+    : Array.isArray(searchJson.results)
+      ? searchJson.results
+      : [];
   return (
     <main className="min-h-screen px-6 py-10 md:px-12">
       <div className="grid gap-8 md:grid-cols-[220px_1fr]">

@@ -13,7 +13,9 @@ export default function AdminPage() {
           authorization: `Bearer ${localStorage.getItem("admin_token") || ""}`
         }
       });
-      return res.json();
+      const json = await res.json();
+      if (!res.ok) return [];
+      return Array.isArray(json) ? json : [];
     }
   });
   const [form, setForm] = useState({ name: "", baseUrl: "", language: "en", adapterKey: "" });
@@ -76,7 +78,7 @@ export default function AdminPage() {
       <section className="mt-8 space-y-4">
         <h2 className="text-lg font-semibold">Sources</h2>
         <div className="grid gap-3 md:grid-cols-2">
-          {data?.map((source: any) => (
+          {(Array.isArray(data) ? data : []).map((source: any) => (
             <div key={source.key} className="rounded-2xl border border-black/10 bg-white/70 p-4 text-sm dark:border-white/10 dark:bg-white/5">
               <p className="font-semibold">{source.name}</p>
               <p className="text-xs text-[var(--color-muted)]">{source.baseUrl}</p>

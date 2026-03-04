@@ -34,9 +34,12 @@ export function SearchBar() {
       </form>
 
       {isLoading && <p className="text-sm text-[var(--color-muted)]">Searching...</p>}
-      {data && (
+      {(!Array.isArray(data) && data?.errors?.length) ? (
+        <p className="text-xs text-[var(--color-muted)]">Some sources failed. Showing available results.</p>
+      ) : null}
+      {(Array.isArray(data) || data?.results) && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {data.flatMap((group: any) =>
+          {(Array.isArray(data) ? data : data.results).flatMap((group: any) =>
             group.items.map((item: any) => <MangaCard key={`${group.source}-${item.id}`} manga={item} />)
           )}
         </div>
