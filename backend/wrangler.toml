@@ -6,7 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 ENVIRONMENT = "development"
 ADMIN_TOKEN = "changeme"
-PUBLIC_BASE_URL = "http://localhost:8787"
+PUBLIC_BASE_URL = "https://mangavault-api.shinzero.workers.dev"
 DEFAULT_CONCURRENCY = "4"
 
 [[d1_databases]]
