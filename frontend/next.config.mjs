@@ -9,7 +9,5 @@ const withPWA = nextPWA({
 
 export default withPWA({
   reactStrictMode: true,
-  experimental: {
-    typedRoutes: true
-  }
+  typedRoutes: true
 });
