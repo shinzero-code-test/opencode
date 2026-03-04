@@ -17,7 +17,7 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const messages = await getMessages();
+  const messages = await getMessages({ locale });
   const direction = locale === "ar" ? "rtl" : "ltr";
   return (
     <html lang={locale} dir={direction} suppressHydrationWarning>
